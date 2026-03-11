@@ -5,10 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dzar Company - Showroom Mobil Listrik Masa Depan</title>
     
+    <!-- Meta Tags untuk SEO & Vercel Preview -->
+    <meta name="description" content="Showroom mobil listrik eksklusif Dzar Company di Gowa, Sulawesi Selatan.">
+    <meta property="og:title" content="Dzar Company - Electric Vehicle Showroom">
+    <meta property="og:description" content="Masa Depan Mobilitas Hijau Dimulai Dari Sini.">
+    
     <!-- CDN: Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- CDN: Alpine.js (Untuk Interaktivitas tanpa Framework berat) -->
+    <!-- CDN: Alpine.js (Dengan atribut defer agar stabil saat render pertama) -->
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
     <!-- CDN: Lucide Icons -->
@@ -16,11 +21,15 @@
 
     <style>
         [x-cloak] { display: none !important; }
-        .fade-in { animation: fadeIn 0.5s ease-in; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        /* Custom scrollbar untuk tampilan premium */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-white font-sans text-gray-900 selection:bg-blue-100 selection:text-blue-900" 
@@ -44,8 +53,11 @@
             this.selectedCar = car;
             window.scrollTo({ top: 0, behavior: 'smooth' });
             this.isMenuOpen = false;
+            // Re-render icons after DOM update
+            setTimeout(() => lucide.createIcons(), 50);
         }
       }"
+      x-init="lucide.createIcons()"
       @scroll.window="scrolled = (window.pageYOffset > 20)"
 >
 
@@ -54,10 +66,10 @@
          :class="scrolled || page !== 'home' ? 'bg-white shadow-md py-3' : 'bg-transparent py-5'">
         <div class="container mx-auto px-6 flex justify-between items-center">
             <div class="flex items-center cursor-pointer" @click="setPage('home')">
-                <div class="bg-blue-600 p-2 rounded-lg mr-2">
+                <div class="bg-blue-600 p-2 rounded-lg mr-2 shadow-lg shadow-blue-200">
                     <i data-lucide="zap" class="text-white h-6 w-6"></i>
                 </div>
-                <span class="text-2xl font-bold" :class="scrolled || page !== 'home' ? 'text-gray-900' : 'text-white'">
+                <span class="text-2xl font-bold tracking-tighter" :class="scrolled || page !== 'home' ? 'text-gray-900' : 'text-white'">
                     DZAR <span class="text-blue-600">COMPANY</span>
                 </span>
             </div>
@@ -66,29 +78,46 @@
             <div class="hidden md:flex items-center space-x-8">
                 <template x-for="item in ['home', 'management', 'cars', 'contact']">
                     <button @click="setPage(item)" 
-                            class="capitalize font-medium transition-colors hover:text-blue-600"
+                            class="capitalize font-semibold transition-all hover:text-blue-600 px-1"
                             :class="page === item ? 'text-blue-600 border-b-2 border-blue-600' : (scrolled || page !== 'home' ? 'text-gray-600' : 'text-gray-100')"
                             x-text="item === 'home' ? 'Beranda' : item === 'management' ? 'Manajemen' : item === 'cars' ? 'Koleksi' : 'Kontak'">
                     </button>
                 </template>
-                <a :href="waLink" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full transition-all shadow-lg font-bold">
+                <a :href="waLink" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-full transition-all shadow-lg shadow-blue-200 font-bold active:scale-95">
                     WhatsApp Kami
                 </a>
             </div>
 
             <!-- Mobile Toggle -->
-            <button class="md:hidden p-2" @click="isMenuOpen = !isMenuOpen">
+            <button class="md:hidden p-2 rounded-lg bg-gray-100/10 backdrop-blur-sm" @click="isMenuOpen = !isMenuOpen">
                 <i :data-lucide="isMenuOpen ? 'x' : 'menu'" :class="scrolled || page !== 'home' ? 'text-gray-900' : 'text-white'"></i>
             </button>
         </div>
 
-        <!-- Mobile Menu -->
-        <div x-show="isMenuOpen" x-cloak class="absolute top-full left-0 w-full bg-white shadow-xl md:hidden flex flex-col p-6 space-y-4 border-t">
-            <button @click="setPage('home')" class="text-left text-lg font-semibold py-2 border-b border-gray-100" :class="page === 'home' ? 'text-blue-600' : 'text-gray-800'">Beranda</button>
-            <button @click="setPage('management')" class="text-left text-lg font-semibold py-2 border-b border-gray-100" :class="page === 'management' ? 'text-blue-600' : 'text-gray-800'">Manajemen</button>
-            <button @click="setPage('cars')" class="text-left text-lg font-semibold py-2 border-b border-gray-100" :class="page === 'cars' ? 'text-blue-600' : 'text-gray-800'">Koleksi Mobil</button>
-            <button @click="setPage('contact')" class="text-left text-lg font-semibold py-2 border-b border-gray-100" :class="page === 'contact' ? 'text-blue-600' : 'text-gray-800'">Hubungi Kami</button>
-            <a :href="waLink" target="_blank" class="bg-blue-600 text-white py-3 rounded-xl font-bold text-center">Chat WhatsApp</a>
+        <!-- Mobile Menu Overlay -->
+        <div x-show="isMenuOpen" x-cloak x-transition.opacity class="fixed inset-0 bg-black/50 z-40 md:hidden" @click="isMenuOpen = false"></div>
+        
+        <!-- Mobile Menu Panel -->
+        <div x-show="isMenuOpen" x-cloak 
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-4"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             class="absolute top-full left-0 w-full bg-white shadow-2xl z-50 md:hidden flex flex-col p-6 space-y-4 border-t border-gray-100">
+            <button @click="setPage('home')" class="text-left text-lg font-bold py-3 border-b border-gray-50 flex justify-between" :class="page === 'home' ? 'text-blue-600' : 'text-gray-800'">
+                Beranda <i data-lucide="chevron-right" class="w-5 h-5"></i>
+            </button>
+            <button @click="setPage('management')" class="text-left text-lg font-bold py-3 border-b border-gray-50 flex justify-between" :class="page === 'management' ? 'text-blue-600' : 'text-gray-800'">
+                Manajemen <i data-lucide="chevron-right" class="w-5 h-5"></i>
+            </button>
+            <button @click="setPage('cars')" class="text-left text-lg font-bold py-3 border-b border-gray-50 flex justify-between" :class="page === 'cars' ? 'text-blue-600' : 'text-gray-800'">
+                Koleksi Mobil <i data-lucide="chevron-right" class="w-5 h-5"></i>
+            </button>
+            <button @click="setPage('contact')" class="text-left text-lg font-bold py-3 border-b border-gray-50 flex justify-between" :class="page === 'contact' ? 'text-blue-600' : 'text-gray-800'">
+                Hubungi Kami <i data-lucide="chevron-right" class="w-5 h-5"></i>
+            </button>
+            <a :href="waLink" target="_blank" class="bg-blue-600 text-white py-4 rounded-2xl font-bold text-center shadow-lg shadow-blue-100 mt-4 active:scale-95">
+                Chat via WhatsApp
+            </a>
         </div>
     </nav>
 
@@ -97,70 +126,78 @@
         
         <!-- PAGE: HOME -->
         <div x-show="page === 'home'" x-cloak class="fade-in">
-            <!-- Hero -->
-            <section class="relative h-screen flex items-center overflow-hidden">
+            <!-- Hero Section -->
+            <section class="relative h-[95vh] min-h-[600px] flex items-center overflow-hidden">
                 <div class="absolute inset-0 z-0">
                     <img src="https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&q=80&w=1920" class="w-full h-full object-cover brightness-50" alt="Hero Car" />
                 </div>
                 <div class="container mx-auto px-6 relative z-10 text-white">
                     <div class="max-w-3xl">
-                        <span class="inline-block bg-blue-600 px-4 py-1 rounded-full text-sm font-bold mb-6 animate-pulse uppercase tracking-widest">Future Technology</span>
-                        <h1 class="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">Masa Depan<br />Mobilitas Hijau.</h1>
-                        <p class="text-xl text-gray-200 mb-10 max-w-2xl">Dzar Company menghadirkan koleksi mobil listrik tercanggih dunia untuk gaya hidup berkelanjutan di Indonesia.</p>
+                        <span class="inline-block bg-blue-600 px-4 py-1.5 rounded-full text-xs font-black mb-6 animate-pulse uppercase tracking-[0.2em]">Future Technology</span>
+                        <h1 class="text-5xl md:text-8xl font-black mb-6 leading-none tracking-tighter">Masa Depan<br />Mobilitas Hijau.</h1>
+                        <p class="text-xl md:text-2xl text-gray-200 mb-10 max-w-2xl leading-relaxed font-medium">Dzar Company menghadirkan teknologi mobil listrik tercanggih untuk gaya hidup berkelanjutan di Indonesia.</p>
                         <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-                            <button @click="setPage('cars')" class="bg-blue-600 hover:bg-blue-700 px-10 py-4 rounded-lg font-bold text-lg flex items-center justify-center transition-all group">
+                            <button @click="setPage('cars')" class="bg-blue-600 hover:bg-blue-700 px-10 py-5 rounded-2xl font-black text-lg flex items-center justify-center transition-all shadow-xl shadow-blue-500/20 active:scale-95 group">
                                 Jelajahi Unit <i data-lucide="arrow-right" class="ml-2 group-hover:translate-x-1 transition-transform"></i>
                             </button>
-                            <a :href="waLink" target="_blank" class="bg-white/10 backdrop-blur-md border border-white/30 hover:bg-white/20 px-10 py-4 rounded-lg font-bold text-lg text-center transition-all">
-                                WhatsApp Kami
+                            <a :href="waLink" target="_blank" class="bg-white/10 backdrop-blur-md border border-white/30 hover:bg-white/20 px-10 py-5 rounded-2xl font-black text-lg text-center transition-all active:scale-95">
+                                Konsultasi Gratis
                             </a>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Quick Specs -->
-            <section class="bg-white py-24">
-                <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
-                    <div class="flex items-start">
-                        <div class="bg-blue-50 p-4 rounded-2xl mr-6"><i data-lucide="battery" class="h-10 w-10 text-blue-600"></i></div>
-                        <div><h3 class="text-xl font-bold mb-2">Jangkauan Luas</h3><p class="text-gray-600">Teknologi baterai terbaru untuk perjalanan hingga 700km sekali charge.</p></div>
+            <!-- Quick Specs Icons -->
+            <section class="bg-white py-24 border-b border-gray-100">
+                <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-16">
+                    <div class="flex flex-col items-center md:items-start text-center md:text-left">
+                        <div class="bg-blue-50 p-5 rounded-[2rem] mb-6 text-blue-600 shadow-inner"><i data-lucide="battery" class="w-12 h-12"></i></div>
+                        <h3 class="text-2xl font-black mb-3">Jangkauan Luas</h3>
+                        <p class="text-gray-500 leading-relaxed">Teknologi baterai terbaru yang memungkinkan perjalanan hingga 700km dalam satu kali pengisian daya penuh.</p>
                     </div>
-                    <div class="flex items-start">
-                        <div class="bg-blue-50 p-4 rounded-2xl mr-6"><i data-lucide="zap" class="h-10 w-10 text-blue-600"></i></div>
-                        <div><h3 class="text-xl font-bold mb-2">Tanpa Emisi</h3><p class="text-gray-600">100% bertenaga listrik, mendukung udara bersih untuk masa depan.</p></div>
+                    <div class="flex flex-col items-center md:items-start text-center md:text-left">
+                        <div class="bg-blue-50 p-5 rounded-[2rem] mb-6 text-blue-600 shadow-inner"><i data-lucide="zap" class="w-12 h-12"></i></div>
+                        <h3 class="text-2xl font-black mb-3">Tanpa Emisi</h3>
+                        <p class="text-gray-500 leading-relaxed">Kendaraan 100% listrik murni yang mendukung kualitas udara bersih dan lingkungan asri di Sulawesi Selatan.</p>
                     </div>
-                    <div class="flex items-start">
-                        <div class="bg-blue-50 p-4 rounded-2xl mr-6"><i data-lucide="shield-check" class="h-10 w-10 text-blue-600"></i></div>
-                        <div><h3 class="text-xl font-bold mb-2">Garansi 8 Tahun</h3><p class="text-gray-600">Kami menjamin performa baterai dan unit dengan layanan purna jual terbaik.</p></div>
+                    <div class="flex flex-col items-center md:items-start text-center md:text-left">
+                        <div class="bg-blue-50 p-5 rounded-[2rem] mb-6 text-blue-600 shadow-inner"><i data-lucide="shield-check" class="w-12 h-12"></i></div>
+                        <h3 class="text-2xl font-black mb-3">Garansi 8 Tahun</h3>
+                        <p class="text-gray-500 leading-relaxed">Kami memberikan jaminan ketenangan pikiran dengan garansi baterai dan layanan purna jual eksklusif.</p>
                     </div>
                 </div>
             </section>
 
-            <!-- Featured Cars -->
-            <section class="bg-gray-50 py-24">
+            <!-- Featured Cars Grid -->
+            <section class="bg-gray-50 py-32">
                 <div class="container mx-auto px-6">
-                    <div class="text-center mb-16">
-                        <h2 class="text-4xl font-bold text-gray-900 mb-4">Unit Unggulan</h2>
-                        <div class="w-20 h-1 bg-blue-600 mx-auto"></div>
+                    <div class="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-6">
+                        <div>
+                            <h2 class="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter">Unit Terpopuler</h2>
+                            <p class="text-gray-500 mt-4 text-lg">Pilihan unit elektrik yang paling dicintai oleh pelanggan kami.</p>
+                        </div>
+                        <button @click="setPage('cars')" class="text-blue-600 font-black flex items-center hover:translate-x-2 transition-transform">
+                            Lihat Semua Koleksi <i data-lucide="arrow-right" class="ml-2 w-5 h-5"></i>
+                        </button>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <template x-for="car in cars.slice(0, 3)">
-                            <div class="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all group">
-                                <div class="relative h-64 overflow-hidden">
-                                    <img :src="car.image" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" :alt="car.name" />
-                                    <div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-blue-600" x-text="car.category"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                        <template x-for="car in cars.slice(0, 3)" :key="car.id">
+                            <div class="bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 group border border-gray-100">
+                                <div class="relative h-72 overflow-hidden">
+                                    <img :src="car.image" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" :alt="car.name" />
+                                    <div class="absolute top-6 right-6 bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest text-blue-600 uppercase shadow-sm" x-text="car.category"></div>
                                 </div>
-                                <div class="p-8">
-                                    <h3 class="text-2xl font-bold mb-2" x-text="car.name"></h3>
-                                    <div class="flex items-center text-gray-500 mb-6 space-x-4 text-sm">
-                                        <span class="flex items-center"><i data-lucide="battery" class="w-4 h-4 mr-1"></i> <span x-text="car.range"></span></span>
-                                        <span class="flex items-center"><i data-lucide="gauge" class="w-4 h-4 mr-1"></i> <span x-text="car.speed"></span></span>
+                                <div class="p-10">
+                                    <h3 class="text-2xl font-black mb-2 text-gray-900" x-text="car.name"></h3>
+                                    <div class="flex items-center text-gray-400 mb-8 space-x-6">
+                                        <span class="flex items-center text-sm font-bold"><i data-lucide="battery" class="w-4 h-4 mr-2 text-blue-500"></i> <span x-text="car.range"></span></span>
+                                        <span class="flex items-center text-sm font-bold"><i data-lucide="gauge" class="w-4 h-4 mr-2 text-blue-500"></i> <span x-text="car.speed"></span></span>
                                     </div>
-                                    <div class="flex justify-between items-center border-t pt-6">
-                                        <span class="text-xl font-bold text-blue-600" x-text="car.price"></span>
-                                        <button @click="setPage('detail', car)" class="text-gray-900 font-bold flex items-center hover:text-blue-600 transition-colors">
-                                            Detail <i data-lucide="chevron-right" class="h-4 w-4 ml-1"></i>
+                                    <div class="flex justify-between items-center border-t border-gray-50 pt-8">
+                                        <span class="text-2xl font-black text-blue-600" x-text="car.price"></span>
+                                        <button @click="setPage('detail', car)" class="bg-gray-900 hover:bg-blue-600 text-white p-3 rounded-2xl transition-colors shadow-lg shadow-gray-200">
+                                            <i data-lucide="chevron-right"></i>
                                         </button>
                                     </div>
                                 </div>
@@ -172,75 +209,91 @@
         </div>
 
         <!-- PAGE: MANAGEMENT -->
-        <div x-show="page === 'management'" x-cloak class="pt-32 pb-24 fade-in">
+        <div x-show="page === 'management'" x-cloak class="pt-32 pb-32 fade-in">
             <div class="container mx-auto px-6">
-                <div class="max-w-3xl mb-20">
-                    <h1 class="text-5xl font-extrabold mb-6 text-gray-900">Manajemen Kami</h1>
-                    <p class="text-xl text-gray-600">Dipimpin oleh para visioner yang berkomitmen menghijaukan aspal Indonesia melalui teknologi listrik.</p>
+                <div class="max-w-4xl mb-24">
+                    <h1 class="text-5xl md:text-6xl font-black mb-8 text-gray-900 tracking-tighter leading-tight">Pemimpin Revolusi<br />Berkendara Sulawesi.</h1>
+                    <p class="text-xl text-gray-500 leading-relaxed max-w-2xl font-medium">Tim pimpinan Dzar Company terdiri dari para ahli industri yang berdedikasi untuk menciptakan masa depan transportasi yang berkelanjutan.</p>
                 </div>
+                
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
                     <!-- Founder -->
-                    <div class="bg-white border border-gray-100 rounded-3xl overflow-hidden hover:shadow-xl transition-all group">
-                        <div class="h-96 overflow-hidden relative bg-gray-100">
-                            <img src="https://drive.google.com/thumbnail?id=1wgOW8sTwG_7lE8u0MfQRrRszZkVOJMiK&sz=w1000" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Abu Dzar" />
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
-                                <div class="text-white">
-                                    <h3 class="text-2xl font-bold">Abu Dzar</h3>
-                                    <p class="text-blue-400 font-semibold uppercase tracking-widest text-sm">Founder & CEO</p>
+                    <div class="bg-white rounded-[3rem] overflow-hidden group shadow-sm border border-gray-100 hover:shadow-2xl transition-all duration-500">
+                        <div class="h-[450px] overflow-hidden relative bg-gray-200">
+                            <img src="https://drive.google.com/thumbnail?id=1wgOW8sTwG_7lE8u0MfQRrRszZkVOJMiK&sz=w1000" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="Abu Dzar" />
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex items-end p-8">
+                                <div class="text-white translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                                    <h3 class="text-3xl font-black leading-tight">Abu Dzar</h3>
+                                    <p class="text-blue-400 font-black uppercase tracking-[0.2em] text-xs mt-1">Founder & CEO</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="p-8"><p class="text-gray-600 leading-relaxed">Pemimpin visioner dengan visi mendemokratisasi akses mobil listrik berkualitas di Indonesia.</p></div>
+                        <div class="p-10">
+                            <p class="text-gray-500 leading-relaxed font-medium italic">"Misi kami adalah mendemokratisasi akses mobil listrik berkualitas bagi seluruh masyarakat Indonesia, dimulai dari Gowa."</p>
+                        </div>
                     </div>
+
                     <!-- Toni -->
-                    <div class="bg-white border border-gray-100 rounded-3xl overflow-hidden hover:shadow-xl transition-all group">
-                        <div class="h-96 overflow-hidden relative bg-gray-100">
-                            <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=800" class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500" alt="Toni" />
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
-                                <div class="text-white">
-                                    <h3 class="text-2xl font-bold">Toni</h3>
-                                    <p class="text-blue-400 font-semibold uppercase tracking-widest text-sm">Chief Operations Officer</p>
+                    <div class="bg-white rounded-[3rem] overflow-hidden group shadow-sm border border-gray-100 hover:shadow-2xl transition-all duration-500">
+                        <div class="h-[450px] overflow-hidden relative bg-gray-200">
+                            <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=800" class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700" alt="Toni" />
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex items-end p-8">
+                                <div class="text-white translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                                    <h3 class="text-3xl font-black leading-tight">Toni</h3>
+                                    <p class="text-blue-400 font-black uppercase tracking-[0.2em] text-xs mt-1">Chief Operations Officer</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="p-8"><p class="text-gray-600 leading-relaxed">Pakar manajemen operasional yang fokus pada efisiensi supply chain dan distribusi unit EV.</p></div>
+                        <div class="p-10">
+                            <p class="text-gray-500 leading-relaxed font-medium">Pakar efisiensi operasional yang memastikan setiap rantai distribusi unit sampai ke tangan pelanggan dengan standar pelayanan prima.</p>
+                        </div>
                     </div>
+
                     <!-- Budi -->
-                    <div class="bg-white border border-gray-100 rounded-3xl overflow-hidden hover:shadow-xl transition-all group">
-                        <div class="h-96 overflow-hidden relative bg-gray-100">
-                            <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Budi Santoso" />
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
-                                <div class="text-white">
-                                    <h3 class="text-2xl font-bold">Budi Santoso</h3>
-                                    <p class="text-blue-400 font-semibold uppercase tracking-widest text-sm">Head of Engineering</p>
+                    <div class="bg-white rounded-[3rem] overflow-hidden group shadow-sm border border-gray-100 hover:shadow-2xl transition-all duration-500">
+                        <div class="h-[450px] overflow-hidden relative bg-gray-200">
+                            <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="Budi Santoso" />
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex items-end p-8">
+                                <div class="text-white translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                                    <h3 class="text-3xl font-black leading-tight">Budi Santoso</h3>
+                                    <p class="text-blue-400 font-black uppercase tracking-[0.2em] text-xs mt-1">Head of Engineering</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="p-8"><p class="text-gray-600 leading-relaxed">Eksper di bidang teknik kendaraan listrik yang memastikan setiap unit memiliki standar keamanan tertinggi.</p></div>
+                        <div class="p-10">
+                            <p class="text-gray-500 leading-relaxed font-medium">Insinyur utama di balik standardisasi teknis unit Dzar, memastikan teknologi baterai tetap optimal pada iklim tropis Indonesia.</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- PAGE: CAR LIST -->
-        <div x-show="page === 'cars'" x-cloak class="pt-32 pb-24 fade-in">
+        <div x-show="page === 'cars'" x-cloak class="pt-32 pb-32 fade-in">
             <div class="container mx-auto px-6">
-                <h1 class="text-5xl font-extrabold mb-10">Koleksi Mobil Listrik</h1>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-                    <template x-for="car in cars">
-                        <div class="group cursor-pointer" @click="setPage('detail', car)">
-                            <div class="relative aspect-[4/3] rounded-[2rem] overflow-hidden mb-6 shadow-lg bg-gray-200">
-                                <img :src="car.image" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" :alt="car.name" />
-                                <div class="absolute top-6 left-6 bg-white/90 backdrop-blur px-4 py-2 rounded-2xl text-xs font-black tracking-widest text-blue-600 uppercase" x-text="car.category"></div>
+                <div class="text-center mb-24 max-w-3xl mx-auto">
+                    <h1 class="text-5xl md:text-7xl font-black mb-8 tracking-tighter text-gray-900 leading-none">Koleksi Masa Depan.</h1>
+                    <p class="text-xl text-gray-500 font-medium leading-relaxed">Unit pilihan terbaik dengan performa tanpa kompromi. Temukan model yang sesuai dengan gaya hidup cerdas Anda.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+                    <template x-for="car in cars" :key="car.id">
+                        <div class="group cursor-pointer bg-white p-4 rounded-[3rem] border border-gray-100 hover:shadow-2xl transition-all duration-500" @click="setPage('detail', car)">
+                            <div class="relative aspect-[4/3] rounded-[2rem] overflow-hidden mb-8 shadow-lg bg-gray-100">
+                                <img :src="car.image" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" :alt="car.name" />
+                                <div class="absolute top-6 left-6 bg-white/90 backdrop-blur px-5 py-2 rounded-2xl text-[10px] font-black tracking-widest text-blue-600 uppercase shadow-sm" x-text="car.category"></div>
                             </div>
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h3 class="text-2xl font-bold group-hover:text-blue-600 transition-colors" x-text="car.name"></h3>
-                                    <p class="text-gray-500 text-sm" x-text="car.range + ' • ' + car.speed"></p>
+                            <div class="px-4">
+                                <div class="flex justify-between items-start mb-6">
+                                    <div>
+                                        <h3 class="text-2xl font-black group-hover:text-blue-600 transition-colors leading-tight" x-text="car.name"></h3>
+                                        <p class="text-gray-400 font-bold mt-1" x-text="car.range + ' • ' + car.speed"></p>
+                                    </div>
+                                    <p class="text-xl font-black text-gray-900" x-text="car.price"></p>
                                 </div>
-                                <p class="text-lg font-bold text-gray-900" x-text="car.price"></p>
+                                <button class="w-full py-5 border-2 border-gray-100 rounded-3xl font-black text-sm uppercase tracking-widest group-hover:bg-blue-600 group-hover:border-blue-600 group-hover:text-white transition-all shadow-sm">
+                                    Spesifikasi Lengkap
+                                </button>
                             </div>
-                            <button class="w-full py-4 border-2 border-gray-100 rounded-2xl font-bold hover:bg-blue-600 hover:border-blue-600 hover:text-white transition-all">Lihat Spesifikasi</button>
                         </div>
                     </template>
                 </div>
@@ -248,45 +301,47 @@
         </div>
 
         <!-- PAGE: CAR DETAIL -->
-        <div x-show="page === 'detail' && selectedCar" x-cloak class="pt-24 pb-24 fade-in">
+        <div x-show="page === 'detail' && selectedCar" x-cloak class="pt-24 pb-32 fade-in">
             <div class="container mx-auto px-6">
-                <button @click="setPage('cars')" class="flex items-center text-gray-500 hover:text-blue-600 mb-8 font-bold transition-colors">
-                    <i data-lucide="arrow-left" class="mr-2 h-5 w-5"></i> Kembali ke List
+                <button @click="setPage('cars')" class="group flex items-center text-gray-500 hover:text-blue-600 mb-12 font-black transition-colors bg-gray-50 px-6 py-3 rounded-2xl w-fit">
+                    <i data-lucide="arrow-left" class="mr-2 h-5 w-5 group-hover:-translate-x-1 transition-transform"></i> Kembali ke Katalog
                 </button>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
-                    <div class="rounded-[3rem] overflow-hidden shadow-2xl bg-gray-100 h-[500px]">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-20">
+                    <div class="rounded-[4rem] overflow-hidden shadow-2xl bg-gray-100 h-[600px] border border-gray-100">
                         <img :src="selectedCar?.image" class="w-full h-full object-cover" :alt="selectedCar?.name" />
                     </div>
                     <div class="flex flex-col justify-center">
-                        <span class="text-blue-600 font-black tracking-widest uppercase mb-4" x-text="selectedCar?.category"></span>
-                        <h1 class="text-5xl md:text-6xl font-black mb-6" x-text="selectedCar?.name"></h1>
-                        <p class="text-3xl font-bold text-gray-900 mb-8" x-text="selectedCar?.price"></p>
-                        <p class="text-xl text-gray-600 mb-10 leading-relaxed" x-text="selectedCar?.description"></p>
+                        <span class="text-blue-600 font-black tracking-[0.3em] uppercase mb-6 text-sm" x-text="selectedCar?.category"></span>
+                        <h1 class="text-6xl md:text-7xl font-black mb-6 tracking-tighter text-gray-900 leading-none" x-text="selectedCar?.name"></h1>
+                        <p class="text-4xl font-black text-gray-900 mb-10" x-text="selectedCar?.price"></p>
+                        <p class="text-2xl text-gray-500 mb-12 leading-relaxed font-medium" x-text="selectedCar?.description"></p>
                         
-                        <div class="grid grid-cols-2 gap-6 mb-12 bg-gray-50 p-8 rounded-[2rem]">
-                            <div class="flex items-center">
-                                <div class="bg-white p-3 rounded-xl mr-4 shadow-sm text-blue-600"><i data-lucide="battery"></i></div>
-                                <div><p class="text-xs text-gray-500">Range</p><p class="font-bold text-lg" x-text="selectedCar?.range"></p></div>
+                        <div class="grid grid-cols-2 gap-8 mb-16">
+                            <div class="bg-gray-50 p-8 rounded-[2.5rem] flex items-center border border-gray-100">
+                                <div class="bg-white p-4 rounded-2xl mr-5 shadow-sm text-blue-600"><i data-lucide="battery" class="w-8 h-8"></i></div>
+                                <div><p class="text-xs font-black text-gray-400 uppercase tracking-widest">Range</p><p class="font-black text-2xl text-gray-900" x-text="selectedCar?.range"></p></div>
                             </div>
-                            <div class="flex items-center">
-                                <div class="bg-white p-3 rounded-xl mr-4 shadow-sm text-blue-600"><i data-lucide="zap"></i></div>
-                                <div><p class="text-xs text-gray-500">0-100 km/h</p><p class="font-bold text-lg" x-text="selectedCar?.speed"></p></div>
+                            <div class="bg-gray-50 p-8 rounded-[2.5rem] flex items-center border border-gray-100">
+                                <div class="bg-white p-4 rounded-2xl mr-5 shadow-sm text-blue-600"><i data-lucide="zap" class="w-8 h-8"></i></div>
+                                <div><p class="text-xs font-black text-gray-400 uppercase tracking-widest">Akselerasi</p><p class="font-black text-2xl text-gray-900" x-text="selectedCar?.speed"></p></div>
                             </div>
-                            <div class="flex items-center">
-                                <div class="bg-white p-3 rounded-xl mr-4 shadow-sm text-blue-600"><i data-lucide="gauge"></i></div>
-                                <div><p class="text-xs text-gray-500">Top Speed</p><p class="font-bold text-lg" x-text="selectedCar?.topSpeed"></p></div>
+                            <div class="bg-gray-50 p-8 rounded-[2.5rem] flex items-center border border-gray-100">
+                                <div class="bg-white p-4 rounded-2xl mr-5 shadow-sm text-blue-600"><i data-lucide="gauge" class="w-8 h-8"></i></div>
+                                <div><p class="text-xs font-black text-gray-400 uppercase tracking-widest">Top Speed</p><p class="font-black text-2xl text-gray-900" x-text="selectedCar?.topSpeed"></p></div>
                             </div>
-                            <div class="flex items-center">
-                                <div class="bg-white p-3 rounded-xl mr-4 shadow-sm text-blue-600"><i data-lucide="cpu"></i></div>
-                                <div><p class="text-xs text-gray-500">Battery</p><p class="font-bold text-lg" x-text="selectedCar?.battery"></p></div>
+                            <div class="bg-gray-50 p-8 rounded-[2.5rem] flex items-center border border-gray-100">
+                                <div class="bg-white p-4 rounded-2xl mr-5 shadow-sm text-blue-600"><i data-lucide="cpu" class="w-8 h-8"></i></div>
+                                <div><p class="text-xs font-black text-gray-400 uppercase tracking-widest">Battery</p><p class="font-black text-2xl text-gray-900" x-text="selectedCar?.battery"></p></div>
                             </div>
                         </div>
 
-                        <div class="flex flex-col sm:flex-row gap-4">
-                            <a :href="waLink" target="_blank" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-5 rounded-2xl text-center text-lg shadow-lg">
+                        <div class="flex flex-col sm:flex-row gap-5">
+                            <a :href="waLink" target="_blank" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black py-6 rounded-3xl text-center text-xl shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
                                 Pesan via WhatsApp
                             </a>
-                            <button class="flex-1 border-2 border-gray-200 hover:bg-gray-50 text-gray-900 font-bold py-5 rounded-2xl text-lg">Download Katalog</button>
+                            <button class="flex-1 border-2 border-gray-200 hover:bg-gray-50 text-gray-900 font-black py-6 rounded-3xl text-xl active:scale-95 transition-all">
+                                Brosur Digital (PDF)
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -294,57 +349,78 @@
         </div>
 
         <!-- PAGE: CONTACT -->
-        <div x-show="page === 'contact'" x-cloak class="pt-32 pb-24 fade-in">
+        <div x-show="page === 'contact'" x-cloak class="pt-32 pb-32 fade-in">
             <div class="container mx-auto px-6">
-                <div class="max-w-6xl mx-auto bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row border border-gray-100">
-                    <div class="md:w-5/12 bg-blue-600 p-12 text-white">
-                        <h2 class="text-4xl font-bold mb-8">Hubungi Kami</h2>
-                        <p class="text-blue-100 mb-12">Tim kami siap membantu Anda melakukan transisi ke masa depan mobilitas berkelanjutan.</p>
-                        <div class="space-y-8">
+                <div class="max-w-6xl mx-auto bg-white rounded-[4rem] shadow-2xl overflow-hidden flex flex-col md:flex-row border border-gray-100">
+                    <div class="md:w-5/12 bg-blue-600 p-16 text-white relative">
+                        <!-- Abstract Design Element -->
+                        <div class="absolute -top-10 -left-10 w-40 h-40 bg-blue-500/30 rounded-full blur-3xl"></div>
+                        
+                        <h2 class="text-5xl font-black mb-10 tracking-tighter leading-none">Ayo Bicara<br />Tentang EV.</h2>
+                        <p class="text-blue-100 mb-16 text-lg font-medium leading-relaxed">Tim spesialis kami siap membantu Anda melakukan transisi ke mobilitas berkelanjutan di wilayah Gowa dan sekitarnya.</p>
+                        
+                        <div class="space-y-12">
                             <div class="flex items-start">
-                                <div class="bg-white/20 p-3 rounded-xl mr-4"><i data-lucide="map-pin"></i></div>
-                                <div><h4 class="font-bold mb-1">Lokasi Showroom</h4><p class="text-blue-50 text-sm" x-text="address"></p></div>
+                                <div class="bg-white/20 p-4 rounded-2xl mr-6 shadow-sm"><i data-lucide="map-pin"></i></div>
+                                <div><h4 class="font-black mb-1 text-xl tracking-tight">Lokasi Showroom</h4><p class="text-blue-50 text-sm leading-relaxed" x-text="address"></p></div>
                             </div>
                             <div class="flex items-start">
-                                <div class="bg-white/20 p-3 rounded-xl mr-4"><i data-lucide="phone"></i></div>
-                                <div><h4 class="font-bold mb-1">WhatsApp</h4><p class="text-blue-50 text-sm">0852 4260 3151</p></div>
+                                <div class="bg-white/20 p-4 rounded-2xl mr-6 shadow-sm"><i data-lucide="phone"></i></div>
+                                <div><h4 class="font-black mb-1 text-xl tracking-tight">WhatsApp Bisnis</h4><p class="text-blue-50 text-sm">0852 4260 3151</p></div>
                             </div>
                             <div class="flex items-start">
-                                <div class="bg-white/20 p-3 rounded-xl mr-4"><i data-lucide="mail"></i></div>
-                                <div><h4 class="font-bold mb-1">Email</h4><p class="text-blue-50 text-sm">info@dzarcompany.com</p></div>
+                                <div class="bg-white/20 p-4 rounded-2xl mr-6 shadow-sm"><i data-lucide="mail"></i></div>
+                                <div><h4 class="font-black mb-1 text-xl tracking-tight">Email Sales</h4><p class="text-blue-50 text-sm font-medium">sales@dzarcompany.com</p></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-20 pt-10 border-t border-white/10">
+                            <p class="text-blue-200 text-xs font-black uppercase tracking-[0.2em]">Jam Operasional Showroom</p>
+                            <div class="flex justify-between mt-4 text-sm font-bold">
+                                <span>Senin - Sabtu</span>
+                                <span>08:00 - 18:00 WITA</span>
                             </div>
                         </div>
                     </div>
-                    <div class="md:w-7/12 p-12 bg-gray-50">
-                        <h3 class="text-3xl font-bold mb-8 text-gray-900">Kirim Pesan</h3>
-                        <form @submit.prevent="window.open(waLink, '_blank')" class="space-y-6">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div class="space-y-2">
-                                    <label class="text-sm font-semibold text-gray-600 uppercase">Nama Lengkap</label>
-                                    <input type="text" class="w-full bg-white border border-gray-200 rounded-2xl p-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Masukkan nama..." />
+                    
+                    <div class="md:w-7/12 p-16 bg-gray-50/50">
+                        <h3 class="text-4xl font-black mb-10 text-gray-900 tracking-tighter">Kirim Pesan Cepat</h3>
+                        <form @submit.prevent="window.open(waLink, '_blank')" class="space-y-8">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nama Lengkap</label>
+                                    <input type="text" required class="w-full bg-white border border-gray-100 rounded-2xl p-5 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all shadow-sm font-bold" placeholder="Masukkan nama..." />
                                 </div>
-                                <div class="space-y-2">
-                                    <label class="text-sm font-semibold text-gray-600 uppercase">Email</label>
-                                    <input type="email" class="w-full bg-white border border-gray-200 rounded-2xl p-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="example@mail.com" />
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Alamat Email</label>
+                                    <input type="email" required class="w-full bg-white border border-gray-100 rounded-2xl p-5 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all shadow-sm font-bold" placeholder="email@dzar.com" />
                                 </div>
                             </div>
-                            <div class="space-y-2">
-                                <label class="text-sm font-semibold text-gray-600 uppercase">Tipe Mobil yang Diminati</label>
-                                <select class="w-full bg-white border border-gray-200 rounded-2xl p-4 focus:ring-2 focus:ring-blue-500 outline-none appearance-none">
-                                    <option>Dzar Model S-Alpha</option>
-                                    <option>Dzar X-Explorer</option>
-                                    <option>Lainnya</option>
-                                </select>
+                            <div class="space-y-3">
+                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Model Diminati</label>
+                                <div class="relative">
+                                    <select class="w-full bg-white border border-gray-100 rounded-2xl p-5 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all shadow-sm font-bold appearance-none">
+                                        <option>Dzar Model S-Alpha</option>
+                                        <option>Dzar X-Explorer</option>
+                                        <option>Dzar GT-Vision</option>
+                                        <option>Lainnya</option>
+                                    </select>
+                                    <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400"><i data-lucide="chevron-down" class="w-5 h-5"></i></div>
+                                </div>
                             </div>
-                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-5 rounded-2xl transition-all shadow-lg shadow-blue-200 flex items-center justify-center">
-                                Lanjut Chat WhatsApp <i data-lucide="arrow-right" class="ml-2"></i>
+                            <div class="space-y-3">
+                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pesan Anda</label>
+                                <textarea rows="4" class="w-full bg-white border border-gray-100 rounded-2xl p-5 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all shadow-sm font-bold" placeholder="Halo Dzar Company, saya ingin tanya seputar..."></textarea>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-6 rounded-3xl transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center text-lg active:scale-[0.98]">
+                                Kirim & Lanjut ke WhatsApp <i data-lucide="arrow-right" class="ml-3"></i>
                             </button>
                         </form>
                     </div>
                 </div>
 
-                <!-- Maps Integration -->
-                <div class="mt-24 h-[400px] w-full rounded-[3rem] overflow-hidden relative shadow-inner border border-gray-200">
+                <!-- Google Maps Embed -->
+                <div class="mt-24 h-[500px] w-full rounded-[4rem] overflow-hidden relative shadow-inner border border-gray-100 group">
                     <iframe 
                         width="100%" 
                         height="100%" 
@@ -352,16 +428,20 @@
                         scrolling="no" 
                         marginheight="0" 
                         marginwidth="0" 
-                        src="https://maps.google.com/maps?q=Jl.%20Karaeng%20Makkawari,%20Samata,%20Gowa&t=&z=15&ie=UTF8&iwloc=&output=embed"
-                        class="grayscale contrast-125 opacity-70">
+                        src="https://maps.google.com/maps?q=Jl.%20Karaeng%20Makkawari,%20Samata,%20Gowa&t=&z=16&ie=UTF8&iwloc=&output=embed"
+                        class="grayscale opacity-60 group-hover:opacity-100 group-hover:grayscale-0 transition-all duration-700">
                     </iframe>
-                    <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
-                        <div class="bg-white/90 backdrop-blur-md p-6 rounded-3xl shadow-2xl text-center border border-gray-100 pointer-events-auto">
-                            <div class="bg-blue-600 w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white">
-                                <i data-lucide="map-pin"></i>
+                    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-none w-full px-6 flex justify-center">
+                        <div class="bg-white/90 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-2xl text-center border border-white pointer-events-auto max-w-sm">
+                            <div class="bg-blue-600 w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 text-white shadow-lg shadow-blue-500/20">
+                                <i data-lucide="map-pin" class="w-8 h-8"></i>
                             </div>
-                            <h4 class="font-bold text-gray-900">Dzar Showroom Gowa</h4>
-                            <p class="text-sm text-gray-500 max-w-xs mt-1" x-text="address"></p>
+                            <h4 class="text-2xl font-black text-gray-900 tracking-tight">Dzar Showroom Gowa</h4>
+                            <p class="text-sm text-gray-500 font-bold mt-2 leading-relaxed" x-text="address"></p>
+                            <button @click="window.open('https://maps.google.com/maps?q=Jl.%20Karaeng%20Makkawari,%20Samata,%20Gowa', '_blank')" 
+                                    class="mt-8 text-blue-600 font-black text-sm uppercase tracking-widest hover:underline flex items-center justify-center mx-auto">
+                                Petunjuk Arah <i data-lucide="external-link" class="ml-2 w-4 h-4"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -370,61 +450,68 @@
     </main>
 
     <!-- FOOTER -->
-    <footer class="bg-gray-900 text-white pt-20 pb-10">
-        <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
+    <footer class="bg-gray-950 text-white pt-32 pb-16">
+        <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-20">
             <div class="col-span-1 md:col-span-1">
-                <div class="flex items-center mb-6">
-                    <i data-lucide="zap" class="text-blue-500 mr-2"></i>
-                    <span class="text-2xl font-bold tracking-tighter">DZAR COMPANY</span>
+                <div class="flex items-center mb-10">
+                    <div class="bg-blue-600 p-2 rounded-lg mr-3"><i data-lucide="zap" class="w-6 h-6"></i></div>
+                    <span class="text-3xl font-black tracking-tighter">DZAR <span class="text-blue-500">COMPANY</span></span>
                 </div>
-                <p class="text-gray-400 mb-8 leading-relaxed">Pionir solusi transportasi masa depan yang ramah lingkungan di Indonesia.</p>
-                <div class="flex space-x-4">
-                    <i data-lucide="instagram" class="h-5 w-5 cursor-pointer hover:text-blue-500 transition-colors"></i>
-                    <i data-lucide="facebook" class="h-5 w-5 cursor-pointer hover:text-blue-500 transition-colors"></i>
-                    <i data-lucide="twitter" class="h-5 w-5 cursor-pointer hover:text-blue-500 transition-colors"></i>
+                <p class="text-gray-400 mb-12 leading-relaxed text-lg font-medium">Solusi transportasi masa depan yang ramah lingkungan, mewah, dan bertenaga. Revolusi mobilitas hijau dimulai dari sini.</p>
+                <div class="flex space-x-6">
+                    <div class="w-12 h-12 rounded-full border border-gray-800 flex items-center justify-center hover:bg-blue-600 hover:border-blue-600 transition-all cursor-pointer group">
+                        <i data-lucide="instagram" class="w-5 h-5 text-gray-500 group-hover:text-white"></i>
+                    </div>
+                    <div class="w-12 h-12 rounded-full border border-gray-800 flex items-center justify-center hover:bg-blue-600 hover:border-blue-600 transition-all cursor-pointer group">
+                        <i data-lucide="facebook" class="w-5 h-5 text-gray-500 group-hover:text-white"></i>
+                    </div>
+                    <div class="w-12 h-12 rounded-full border border-gray-800 flex items-center justify-center hover:bg-blue-600 hover:border-blue-600 transition-all cursor-pointer group">
+                        <i data-lucide="twitter" class="w-5 h-5 text-gray-500 group-hover:text-white"></i>
+                    </div>
                 </div>
             </div>
 
             <div>
-                <h4 class="text-lg font-bold mb-6">Navigasi</h4>
-                <ul class="space-y-4 text-gray-400">
-                    <li><button @click="setPage('home')" class="hover:text-white">Beranda</button></li>
-                    <li><button @click="setPage('management')" class="hover:text-white">Manajemen</button></li>
-                    <li><button @click="setPage('cars')" class="hover:text-white">Katalog</button></li>
+                <h4 class="text-xs font-black uppercase tracking-[0.3em] text-gray-500 mb-10">Navigasi</h4>
+                <ul class="space-y-6">
+                    <li><button @click="setPage('home')" class="text-gray-400 hover:text-white font-bold transition-colors">Beranda Utama</button></li>
+                    <li><button @click="setPage('management')" class="text-gray-400 hover:text-white font-bold transition-colors">Struktur Manajemen</button></li>
+                    <li><button @click="setPage('cars')" class="text-gray-400 hover:text-white font-bold transition-colors">Katalog Unit EV</button></li>
+                    <li><button @click="setPage('contact')" class="text-gray-400 hover:text-white font-bold transition-colors">Layanan Pelanggan</button></li>
                 </ul>
             </div>
 
             <div>
-                <h4 class="text-lg font-bold mb-6">Alamat</h4>
-                <p class="text-gray-400 text-sm mb-4 leading-relaxed" x-text="address"></p>
-                <p class="text-blue-400 font-bold">0852 4260 3151</p>
+                <h4 class="text-xs font-black uppercase tracking-[0.3em] text-gray-500 mb-10">Showroom Gowa</h4>
+                <p class="text-gray-400 text-lg font-bold mb-6 leading-relaxed" x-text="address"></p>
+                <div class="flex items-center text-blue-500 font-black text-xl">
+                    <i data-lucide="phone" class="mr-3 w-6 h-6"></i> 0852 4260 3151
+                </div>
+                <p class="text-gray-500 text-sm mt-4 font-medium">Buka setiap hari kecuali Libur Nasional.</p>
             </div>
 
             <div>
-                <h4 class="text-lg font-bold mb-6">Newsletter</h4>
-                <div class="flex">
-                    <input type="email" placeholder="Email" class="bg-gray-800 border-none rounded-l-xl px-4 py-2 w-full outline-none focus:ring-1 focus:ring-blue-500" />
-                    <button class="bg-blue-600 px-4 py-2 rounded-r-xl"><i data-lucide="chevron-right"></i></button>
+                <h4 class="text-xs font-black uppercase tracking-[0.3em] text-gray-500 mb-10">Update Teknologi</h4>
+                <p class="text-gray-400 mb-8 font-medium leading-relaxed">Berlangganan untuk info unit terbaru dan promo test drive.</p>
+                <div class="flex bg-gray-900 rounded-[1.5rem] p-2 border border-gray-800 focus-within:border-blue-500 transition-all">
+                    <input type="email" placeholder="Email Anda" class="bg-transparent border-none px-4 py-2 w-full outline-none text-white font-bold" />
+                    <button class="bg-blue-600 p-3 rounded-xl hover:bg-blue-700 transition-all shadow-lg active:scale-95"><i data-lucide="arrow-right"></i></button>
                 </div>
             </div>
         </div>
-        <div class="container mx-auto px-6 mt-20 pt-8 border-t border-gray-800 text-center text-gray-500 text-xs">
-            <p>&copy; 2024 Dzar Company. All Rights Reserved. Gowa, Sulawesi Selatan.</p>
+        <div class="container mx-auto px-6 mt-32 pt-12 border-t border-gray-900 flex flex-col md:flex-row justify-between items-center gap-6">
+            <p class="text-gray-600 text-sm font-bold">&copy; 2024 Dzar Company EV Showroom. Gowa, Sulawesi Selatan.</p>
+            <div class="flex space-x-8 text-xs font-black uppercase tracking-widest text-gray-700">
+                <a href="#" class="hover:text-blue-500 transition-colors">Privacy Policy</a>
+                <a href="#" class="hover:text-blue-500 transition-colors">Terms of Service</a>
+            </div>
         </div>
     </footer>
 
     <script>
-        // Inisialisasi Ikon Lucide setelah DOM siap
-        window.addEventListener('DOMContentLoaded', (event) => {
+        // Inisialisasi Ikon Lucide saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-        });
-
-        // Pastikan ikon diupdate setiap Alpine merubah halaman
-        document.addEventListener('alpine:initialized', () => {
-            Alpine.effect(() => {
-                const currentPage = Alpine.store('page'); // Ini hanya logic contoh, Alpine re-evaluates DOM
-                setTimeout(() => lucide.createIcons(), 50);
-            });
         });
     </script>
 </body>
